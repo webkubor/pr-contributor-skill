@@ -30,3 +30,11 @@
 - `references/pr-description.md` —— 标题与正文写法、五块结构、正反例。
 - `references/review-and-ci.md` —— CI 排障手册与 review 应对手册。
 - `templates/` —— PR 正文、提交信息、PR 标题三份模板。
+
+### Added
+
+- `scripts/check-update.sh` —— 检查本 skill 是否落后于上游（`--update` 可快进更新）。
+  软链安装的 skill 读的是本地工作区，Agent 察觉不到 GitHub 上的更新 ——
+  这个脚本把「有没有更新」变成可判定的事实（退出码 0=最新 / 1=有更新 / 2=检查失败）。
+- SKILL.md「版本自检」小节与「更新与分发」表；README「版本更新说明」章节 ——
+  明确写出「不会自动更新、也不会提示」这个边界，避免使用者误以为推了新版本就生效。

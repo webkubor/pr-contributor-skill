@@ -112,6 +112,25 @@ node ~/.claude/skills/pr-contributor/scripts/scan-contribution-signals.mjs --rep
 
 规范只有一条：**目录里有 `SKILL.md`，Agent 从这里读起**。所以任何框架都能用，不需要插件。
 
+### ⚠️ 版本更新说明（重要）
+
+**软链安装的 skill 不会自动更新，也不会提示你更新。**
+
+各 Agent 读的是**本地工作区**（软链指向的 git clone），不会去 GitHub 拉。所以：
+
+| 你的动作 | 会发生什么 |
+|---|---|
+| 在 GitHub 上推了新版本 | Agent **察觉不到**，继续用旧版本 |
+| 想知道是不是最新版 | `bash scripts/check-update.sh`（退出码 1 = 有更新） |
+| 想更新 | `bash scripts/check-update.sh --update`（只快进，不覆盖本地改动） |
+| 用 `--copy` 拷贝安装 | 永远不会更新，得手动重新拷贝 |
+
+这是软链方案的固有边界，不是 bug —— 换来的是「改完真源，所有 Agent 立刻生效」。
+代价就是更新要手动触发。`check-update.sh` 把这件事变成一条命令，不用记 git 命令。
+
+**给 Agent 使用者的提示**：如果你觉得某个脚本行为和文档不符，先跑 `check-update.sh`，
+可能是本地版本旧了 —— 先告知用户有更新、确认后再 `--update`，不要擅自更新。
+
 ---
 
 ## 参考文档
