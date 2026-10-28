@@ -23,7 +23,10 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SKILL_NAME="$(basename "$HERE")"
+# skill 名取自 SKILL.md 的 frontmatter name（权威），不是目录名 ——
+# 目录名可能是 pr-contributor-skill（仓库名），而 Agent 认的是 frontmatter 名。
+SKILL_NAME="$(sed -n 's/^name:[[:space:]]*//p' "$HERE/SKILL.md" 2>/dev/null | head -1 | tr -d '"'\''' | tr -d '\r')"
+[ -n "$SKILL_NAME" ] || SKILL_NAME="$(basename "$HERE")"
 MODE="symlink"
 ACTION="install"
 ONLY=""
