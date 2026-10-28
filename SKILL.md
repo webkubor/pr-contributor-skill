@@ -93,14 +93,21 @@ node scripts/pr-lint.mjs --title "fix: ..." --body-file /tmp/pr-body.md --diffst
 ### 版本自检
 
 本 skill 通过软链指向一个 git clone。**各 Agent 读的是本地工作区，不会自动去 GitHub 拉** ——
-你在 GitHub 更新了版本，Agent 使用时察觉不到，除非有人执行更新。
+你在 GitHub 更新了版本，Agent 使用时察觉不到。
 
-被问到「这个 skill 是最新版吗」或发现行为与文档不符时，先跑：
+两道保险：
+
+1. **维护者的机器有每日自动快进**（launchd `com.webkubor.skill-autoupdate`，07:17 跑，
+   只做 fast-forward；本地有未推送提交就跳过并记录）。所以更新后**第二天**自动生效，
+   不需要提醒任何人。
+2. **任何机器都能手动查**：
 
 ```bash
 bash scripts/check-update.sh            # 只查，不改（退出码 1 = 有更新）
 bash scripts/check-update.sh --update   # 查 + 快进到最新
 ```
+
+被问到「这个 skill 是最新版吗」或发现行为与文档不符时，先跑 `check-update.sh`。
 
 **不要擅自 `--update`**：先告知用户有更新、说明更新了什么，等确认后再更新。
 本地若改过这个 skill 仓，脚本会拒绝覆盖并报错 —— 那是有意为之。
@@ -301,8 +308,12 @@ node scripts/pr-lint.mjs --title "..." --body-file /tmp/pr-body.md \
 |---|---|
 | **本 skill 怎么装到各 Agent** | `./install.sh`（建软链到 claude / codex / agents / dsh / magpie 五个目录）；`--copy` 用拷贝、`--list` 只检测、`--uninstall` 卸载 |
 | **GitHub 上更新了版本，本地怎么跟上** | `bash scripts/check-update.sh --update`（只快进，不覆盖本地改动） |
-| **Agent 使用时会不会自己提示更新** | **不会**。软链指向本地 clone，Agent 读的是工作区快照，没有版本感知。要提示靠 `check-update.sh` 被显式调用 |
+| **Agent 使用时会不会自己提示更新** | **不会主动提示**。软链指向本地 clone，Agent 读的是工作区快照，没有版本感知。两道保险：① 维护者的机器有每日自动快进任务（launchd，07:17，只做 fast-forward）② 任何机器都能手动跑 `check-update.sh` |
 | **别人怎么用这个 skill** | clone 后按 README 的「装到各个 Agent 框架」一节，或直接拷 `SKILL.md` + `scripts/` + `references/` + `templates/` 进自己的 skill 目录 |
+
+> **给 Agent 的提示**：如果你觉得某个脚本行为和文档不符，可能是本地版本旧了。
+> 先跑 `bash scripts/check-update.sh`（退出码 1 = 有更新），**告知用户有更新并说明差了什么**，
+> 确认后再 `--update`。不要擅自更新 —— 本地可能有未推送的改动。
 
 ## 相关 Skills
 

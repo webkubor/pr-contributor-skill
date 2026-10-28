@@ -120,13 +120,17 @@ node ~/.claude/skills/pr-contributor/scripts/scan-contribution-signals.mjs --rep
 
 | 你的动作 | 会发生什么 |
 |---|---|
-| 在 GitHub 上推了新版本 | Agent **察觉不到**，继续用旧版本 |
+| 在 GitHub 上推了新版本 | Agent **不会主动提示**，但维护者的机器有每日自动快进任务（launchd，07:17，只做 fast-forward）→ **第二天自动生效** |
 | 想知道是不是最新版 | `bash scripts/check-update.sh`（退出码 1 = 有更新） |
-| 想更新 | `bash scripts/check-update.sh --update`（只快进，不覆盖本地改动） |
+| 想立刻更新 | `bash scripts/check-update.sh --update`（只快进，不覆盖本地改动） |
 | 用 `--copy` 拷贝安装 | 永远不会更新，得手动重新拷贝 |
 
 这是软链方案的固有边界，不是 bug —— 换来的是「改完真源，所有 Agent 立刻生效」。
-代价就是更新要手动触发。`check-update.sh` 把这件事变成一条命令，不用记 git 命令。
+代价是更新不会**主动提示**。两道保险：
+
+- **自动**（维护者的机器）：每日 launchd 快进，只做 fast-forward；本地有未推送提交就跳过并记录，
+  永不静默覆盖改动。
+- **手动**（任何机器）：`check-update.sh` 一条命令，不用记 git 命令。
 
 **给 Agent 使用者的提示**：如果你觉得某个脚本行为和文档不符，先跑 `check-update.sh`，
 可能是本地版本旧了 —— 先告知用户有更新、确认后再 `--update`，不要擅自更新。
