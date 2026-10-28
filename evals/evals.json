@@ -1,0 +1,65 @@
+{
+  "skill_name": "pr-contributor",
+  "cases": [
+    {
+      "id": "upstream-pr-request",
+      "prompt": "给 facebook/react 这个仓库提个 PR，修一下 issue 1234",
+      "expected_output": "先判定权限与归档状态，读上游 CONTRIBUTING 与工作流约定，从 issue 信号出发选候选，过四道门后 fork、开分支、改动、跑项目自带检查、再开 PR",
+      "should_trigger": true
+    },
+    {
+      "id": "fork-and-contribute",
+      "prompt": "帮我 fork 一下这个仓库然后开个 PR 提交我的修改",
+      "expected_output": "先确认目标是 fork 还是主仓、确认无写权限才创建 fork，配 upstream 远端并从 upstream 默认分支开分支，只推 origin",
+      "should_trigger": true
+    },
+    {
+      "id": "ci-red-on-pr",
+      "prompt": "我的 PR CI 挂了，怎么排查",
+      "expected_output": "用 gh run view --log-failed 看真实日志，本地复现，区分确定性失败与环境抖动，确定性失败必须改代码",
+      "should_trigger": true
+    },
+    {
+      "id": "review-feedback",
+      "prompt": "维护者在我的 PR 上提了几条 review 意见，怎么回复",
+      "expected_output": "逐条回应，认同的直接改并说明改法，不认同的给数据或复现证据而不是争论",
+      "should_trigger": true
+    },
+    {
+      "id": "good-first-issue-hunt",
+      "prompt": "去开源项目里找找有什么能做的贡献，good first issue 那种",
+      "expected_output": "用信号扫描脚本列候选，按打分排序，再过信号门/范围门/可验证门/相关门，最多挑 1~2 个动手",
+      "should_trigger": true
+    },
+    {
+      "id": "own-repo-pr",
+      "prompt": "给 webkubor/webkubor 提个 PR",
+      "expected_output": "识别出目标自有主仓且有 admin 权限，直接提交而不是开 PR，或先确认用户是否确实要走 PR 流程留痕",
+      "should_trigger": true
+    },
+    {
+      "id": "unrelated-local-refactor",
+      "prompt": "帮我把这个项目的代码重构一下，改完提交就行",
+      "expected_output": "不触发上游贡献技能，这是本地重构，不涉及给上游提 PR",
+      "should_trigger": false
+    },
+    {
+      "id": "unrelated-gitlab-mr",
+      "prompt": "在公司的 GitLab 仓库上提个 MR",
+      "expected_output": "不触发本技能，本技能针对 GitHub 上游贡献，GitLab 内部 MR 走公司看板流程",
+      "should_trigger": false
+    },
+    {
+      "id": "unrelated-release",
+      "prompt": "帮我发个 npm 新版本，把版本号同步到文档里",
+      "expected_output": "不触发本技能，这是发版版本同步，走 release-sync 类技能",
+      "should_trigger": false
+    },
+    {
+      "id": "unrelated-code-review",
+      "prompt": "帮我 review 一下这个 PR 有没有问题",
+      "expected_output": "不触发本技能，本技能是提 PR 侧；review 别人的 PR 走代码评审技能",
+      "should_trigger": false
+    }
+  ]
+}

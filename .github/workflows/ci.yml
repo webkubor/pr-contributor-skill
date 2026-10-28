@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 脚本语法检查
+        run: |
+          set -e
+          bash -n scripts/pr-preflight.sh
+          bash -n scripts/setup-upstream.sh
+          node --check scripts/scan-contribution-signals.mjs
+          node --check scripts/pr-lint.mjs
+          echo "✓ 脚本语法通过"
+
+      - name: SKILL.md 结构校验
+        run: |
+          set -e
+          test -f SKILL.md
+          grep -q '^name: ' SKILL.md
+          grep -q '^description: ' SKILL.md
+          grep -qE '^version: [0-9]+\.[0-9]+\.[0-9]+$' SKILL.md
+          grep -q '^license: ' SKILL.md
+          echo "✓ SKILL.md frontmatter 合规"
+
+      - name: SKILL.md 与 CHANGELOG 版本一致
+        run: |
+          set -e
+          VER="$(grep -m1 '^version:' SKILL.md | awk '{print $2}')"
+          grep -q "## \[$VER\]" CHANGELOG.md || {
+            echo "::error::CHANGELOG.md 里没有 $VER 的条目"
+            exit 1
+          }
+          echo "✓ CHANGELOG 记录了 $VER"
+
+      - name: 文档完整性
+        run: |
+          set -e
+          for f in references/finding-work.md references/guardrails.md \
+                   references/pr-conventions.md references/pr-description.md \
+                   references/review-and-ci.md \
+                   templates/pr-body.md templates/commit-message.md templates/pr-title.md \
+                   README.md LICENSE CHANGELOG.md; do
+            test -s "$f" || { echo "::error::缺失或为空: $f"; exit 1; }
+          done
+          echo "✓ 文档齐全"
+
+      - name: 内部信息泄漏扫描
+        run: |
+          set -e
+          # 模式放在 .github/leak-patterns.txt（独立文件），扫描时排除它自己 ——
+          # 关键词写在脚本里会命中脚本自身，每次跑都假阳性。
+          #
+          # 必须先过滤注释行和空行：grep -f 把空行当「空模式」，会匹配每一行。
+          PATTERNS="$(mktemp)"
+          trap 'rm -f "$PATTERNS"' EXIT
+          grep -vE '^\s*(#|$)' .github/leak-patterns.txt > "$PATTERNS"
+          test -s "$PATTERNS" || { echo "::error::leak-patterns.txt 过滤后为空"; exit 1; }
+          if grep -rniE -f "$PATTERNS" . \
+               --exclude-dir=.git --exclude=leak-patterns.txt ; then
+            echo "::error::检测到内部标识 / 内网地址 / 疑似密钥，公开仓不允许"
+            exit 1
+          fi
+          echo "✓ 无内部信息泄漏"
