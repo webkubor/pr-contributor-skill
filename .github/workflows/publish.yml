@@ -1,7 +1,7 @@
 name: Publish
 
 # 推 v* tag 时自动建 GitHub Release。
-# SKILL.md version 与 tag 强同步（CS Skill 规范要求），这里做校验 + 建 Release。
+# SKILL.md version 与 tag 强同步；公开仓自行校验并创建 Release。
 
 on:
   push:

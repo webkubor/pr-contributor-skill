@@ -1,7 +1,7 @@
 ---
 name: pr-contributor
-description: "给任意开源项目提 PR 的完整闭环：读懂上游（CONTRIBUTING / 代码风格 / Issue 模板）→ 从真实信号里挖出值得改的点 → fork + 分支 → 最小改动 → 跑项目自带检查 → 开 PR → 跟 CI 与 review。触发条件: 用户要求给某个仓库或项目提 PR、做上游贡献、fork 后开 PR、按 issue 批量修、修被 CI 打回的 PR 时触发。"
-version: 0.1.0
+description: "个人项目代码交付与上游贡献：GitHub/GitLab 自有仓从 worktree、验证、提交推送到远端主干验收；外部仓走 fork/PR/MR 与评审。覆盖服务器改动、未提交/未推送检查、跨机器交付回执和安全回收。任务涉及个人仓修改、提交、合并、交付收尾或上游贡献时使用。仅依赖公开工具，不依赖任何私有系统。"
+version: 0.2.0
 license: MIT
 author: webkubor
 category: devops
@@ -9,9 +9,15 @@ scope: personal
 platforms: [linux, macos, windows]
 url: https://github.com/webkubor/pr-contributor-skill
 # 精确触发短语（整词匹配，不做空格切分）。
-# 刻意不收「提」「提交」「review」「ci」这类单字泛词 —— 它们会让
-# 「帮我提交代码」「帮我 review 这个 PR」误触发。泛词留在 description 里当语义描述。
+# 不收「提」「提交」这类单字泛词；个人仓提交代码已纳入本技能。
+# 公司仓仍先按归属分流，不能因为触发短语就绕开组织规则。
 trigger:
+  - 个人项目交付
+  - 提交代码
+  - 推送代码
+  - 合入主干
+  - 服务器代码收尾
+  - 清理 worktree
   - 提 PR
   - 提交 PR
   - 开 PR
@@ -42,10 +48,37 @@ metadata:
   openclaw:
     tags: [github, pull-request, open-source, contribution, fork, upstream, ci]
     requires:
-      bins: [git, gh]
+      bins: [git, python3]
 ---
 
-# PR Contributor — 给上游提一个维护者愿意合的 PR
+# PR Contributor — 个人项目交付与上游贡献
+
+## 先选择交付模式
+
+本 skill 独立运行，基础依赖 Git、Python 3.9+；不需要私有 CLI、私有 API、服务器台账或密钥库。外部 GitHub 贡献再按需使用 gh/Node，GitLab 使用公开 Git/平台工具。
+
+| 目标 | 路径 | 完成标准 |
+|---|---|---|
+| 自有个人仓（GitHub / GitLab，公开或私有） | 先读 `references/personal-delivery.md`；授权范围内验证、提交、推送并合入目标主干 | 刷新远端后，最终提交在目标主干中；服务器部署另记运行版本 |
+| 外部项目或需评审的共享仓 | 按下文上游流程；GitLab 走平台 MR 与项目规范 | 明确记录 pending / merged / closed，不自称外部 PR 已合并 |
+| 公司仓 | 使用公司已有流程 | 不采用个人项目直合，本文不替代公司授权和发布门禁 |
+
+所有个人仓修改与收尾都触发本 skill，包括服务器上的 worktree。**有 worktree 不代表未交付，推到分支也不代表已合主干；必须核验状态。** 不自动提交所有脏文件，不强推，不清掉别人的 WIP。
+
+```bash
+# SKILL_DIR = 本 skill 的绝对路径；REPO = 当前任务仓库路径。
+python3 "$SKILL_DIR/scripts/delivery.py" audit --repo "$REPO" --remote origin --base main --json
+python3 "$SKILL_DIR/scripts/delivery.py" verify --repo "$REPO" --remote origin --base main
+# receipt 输出到仓库外；失败/未知也如实记录，不会因为写了回执就变成成功。
+python3 "$SKILL_DIR/scripts/delivery.py" receipt --repo "$REPO" --remote origin --base main \
+  --output /absolute/path/outside-repo/delivery-receipt.json
+```
+
+网络/认证失败 => unknown，禁止报“干净”。所有登记 worktree 都被检查；其他任务在途时全仓验收会非零，要列出归属而不是删掉它们。Mac 或其他协调机通过远端主干取得成果，不靠生产目录里一份未提交文件。
+
+---
+
+# 外部贡献模式：给上游提一个维护者愿意合的 PR
 
 > **这个 skill 解决的不是「怎么调用 gh 提 PR」**（那是一次 `gh pr create` 的事）。
 > 它解决的是上游贡献里 90% 真正会失败的地方：**提了个维护者不想要的 PR**。
@@ -71,8 +104,7 @@ metadata:
 - 用户要批量修某个仓库的多个同类问题（需要先做信号筛选，不是无脑扫）
 - 已开的 PR CI 挂了、review 提了意见，需要跟进到合
 
-**不适用**：给自己有写权限的仓库提 PR（直接推分支就行，不需要 fork）、
-纯本地重构、GitLab 私有仓内部 MR（流程不同）。
+**本节外部模式不适用**：自有个人仓（转上面的主干交付流程）、公司仓的内部 MR（遵循组织流程）。不能把“有写权限”当成用户已授权直合的依据。
 
 ## 快速开始
 
@@ -321,7 +353,7 @@ node scripts/pr-lint.mjs --title "..." --body-file /tmp/pr-body.md \
 - `github-code-review` — review 别人 PR 的 diff 与行内评论
 - `github-issues` — 建单、打标签、认领 issue
 - `github-repo-management` — clone / fork / 远端管理
-- `task-board` — 公司侧 GitLab 看板的拉单/交单流程
+- 公司项目按各自公开或组织内贡献约定执行，不要求安装任何特定私有技能。
 
 ## 参考文档
 

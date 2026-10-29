@@ -15,6 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 独立交付与安装行为测试
+        run: python3 -m unittest discover -s tests -v
+
       - name: 脚本语法检查
         run: |
           set -e
@@ -49,7 +52,7 @@ jobs:
           set -e
           for f in references/finding-work.md references/guardrails.md \
                    references/pr-conventions.md references/pr-description.md \
-                   references/review-and-ci.md \
+                   references/review-and-ci.md references/personal-delivery.md \
                    templates/pr-body.md templates/commit-message.md templates/pr-title.md \
                    README.md LICENSE CHANGELOG.md; do
             test -s "$f" || { echo "::error::缺失或为空: $f"; exit 1; }

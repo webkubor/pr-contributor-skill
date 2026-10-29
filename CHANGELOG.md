@@ -6,6 +6,20 @@
 版本号与本仓 git tag 强同步：**tag `vX.Y.Z` 必须与 `SKILL.md` 的 `version: X.Y.Z` 一致**，
 由 CI 校验（见 `.github/workflows/publish.yml`）。
 
+## [0.2.0] - 2026-10-29
+
+### Added
+
+- 自有个人 GitHub/GitLab 仓交付模式：任务归属、worktree、验证、提交推送、远端主干验收与安全回收；外部 PR/MR 保留上游评审边界。
+- Python 标准库交付工具：枚举全部登记 worktree，识别未提交、本地提交、远端分支与主干交付，支持私有回执和显式创建 worktree；远端刷新失败不能出具成功证明。
+- 使用本地 bare remote 的行为测试，覆盖分支未合主干、未跟踪文件、仓外 worktree、detached HEAD 与鉴权/网络失败。
+- Hermes 默认 home 和现有 profile 的幂等安装，显式技能目录支持；备份放在技能发现目录外，拷贝排除 Git 元数据。
+
+### Changed
+
+- 基础交付只依赖公开的 Git 和 Python 3.9+，不依赖任何私有工具、服务或账户台账。
+- 技能触发扩展到个人仓修改、服务器代码收尾、提交推送、主干交付；安装不再等同于已被运行时加载或完成交付。
+
 ## [0.1.0] - 2026-10-28
 
 首个版本。

@@ -1,8 +1,30 @@
 <h1 align="center">🔀 PR Contributor</h1>
 
+个人仓代码交付与外部贡献的统一技能。自有 GitHub/GitLab 仓从隔离修改一直验收到远端主干；外部项目遵循上游规则，跟进 PR/MR。基础交付工具只需要 Git 和 Python 3.9+，不依赖任何私有系统。
+
+### 个人仓交付（0.2.0）
+
+```bash
+# 公开仓无需账号即可下载；也可自行改用 SSH 克隆。
+git clone https://github.com/webkubor/pr-contributor-skill.git
+cd pr-contributor-skill
+bash install.sh --target hermes  # 覆盖已有默认 home 与 profile
+# 自定义框架目录也可：bash install.sh --skills-dir /absolute/path/to/skills
+python3 scripts/delivery.py audit --repo /path/to/project --base main --json
+python3 scripts/delivery.py verify --repo /path/to/project --base main
+python3 scripts/delivery.py receipt --repo /path/to/project --base main \
+  --output /path/outside/project/receipt.json
+```
+
+审计遍历 Git 登记的全部 worktree，包括仓外目录；区分未提交、只在本地、远端分支已保存、目标主干已交付。刷新远端失败返回 unknown；离线缓存永远不能证明交付成功。audit 完整取证返回 0 不代表无待办，verify/receipt 对待办返回 1、未知返回 2。
+
+回执包含主机/仓库与工作目录信息，应留在私有运维目录。其他任务的 WIP 会阻止全仓 verify 通过，需按归属核实，不能自动提交或删除。工具不隐式推送、合并、部署或回收。
+
+完整执行流程见 [个人仓交付](references/personal-delivery.md)。公司仓保留公司流程；外部贡献的严格限制只作用于外部模式。不同机器从远端取得同一版本，无需共享任何私有 API 或工具。
+
 <p align="center">
   <a href="https://github.com/webkubor/pr-contributor-skill/releases"><img src="https://img.shields.io/github/v/release/webkubor/pr-contributor-skill?style=for-the-badge&color=3fb950&label=release" alt="release" /></a>
-  <a href="https://github.com/webkubor/pr-contributor-skill"><img src="https://img.shields.io/badge/skill-version-0.1.0-646cff?style=for-the-badge" alt="skill version" /></a>
+  <a href="https://github.com/webkubor/pr-contributor-skill"><img src="https://img.shields.io/badge/skill-version-0.2.0-646cff?style=for-the-badge" alt="skill version" /></a>
   <img src="https://img.shields.io/badge/license-MIT-777?style=for-the-badge" alt="MIT" />
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="node" />
   <img src="https://img.shields.io/badge/agents-any--agent-purple?style=for-the-badge" alt="any agent" />
@@ -90,7 +112,7 @@ node scripts/pr-lint.mjs --title "fix(parser): ..." --body-file body.md --auto
 
 ```bash
 # 1. 放进你的 Agent skill 目录
-git clone https://github.com/webkubor/pr-contributor-skill.git
+git clone git@github.com:webkubor/pr-contributor-skill.git
 cp -r pr-contributor-skill ~/.claude/skills/pr-contributor
 
 # 2. 体检目标仓
