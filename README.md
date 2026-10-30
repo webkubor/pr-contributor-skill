@@ -22,6 +22,27 @@ python3 scripts/delivery.py receipt --repo /path/to/project --base main \
 
 完整执行流程见 [个人仓交付](references/personal-delivery.md)。公司仓保留公司流程；外部贡献的严格限制只作用于外部模式。不同机器从远端取得同一版本，无需共享任何私有 API 或工具。
 
+### 这个仓同时是「技能安装器」的规范源
+
+`scripts/install_skill.py` 不只是本仓的安装脚本 —— 它是 webkubor 名下所有技能仓
+安装器的**公开规范源**。其他仓（charmoji / deadcode-reaper / logo-brand-designer /
+release-sync）同步同一份文件；本机总控由 CortexOS 的 `cs skill install` 负责：
+
+```
+https://raw.githubusercontent.com/webkubor/pr-contributor-skill/main/scripts/install_skill.py
+```
+
+为什么要有规范源：技能仓各自独立发布，仓与仓之间不能互相依赖，安装器只能**复制**过去。
+复制就会漂移 —— 改了这里忘了同步某个仓，那个仓的安装行为就悄悄变成旧的，
+没有报错、没有告警，只是「某个仓装出来的样子跟别的不一样」。
+
+漂移怎么防：各仓 CI 校验提交时固定的安装器摘要；CortexOS 的
+`node scripts/skill/check-installer-copies.mjs` 跨仓比对规范源，
+修改本文件后运行该检查的 `--fix` 选项分发，再分别提交各仓。
+
+安装器本身无任何包名硬编码（marker / stage 前缀 / 备份路径都从 skill 名派生），
+所以同一份文件拷到任何技能包里都能正确工作。
+
 <p align="center">
   <a href="https://github.com/webkubor/pr-contributor-skill/releases"><img src="https://img.shields.io/github/v/release/webkubor/pr-contributor-skill?style=for-the-badge&color=3fb950&label=release" alt="release" /></a>
   <a href="https://github.com/webkubor/pr-contributor-skill"><img src="https://img.shields.io/badge/skill-version-0.2.0-646cff?style=for-the-badge" alt="skill version" /></a>

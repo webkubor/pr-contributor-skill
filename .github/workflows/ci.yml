@@ -59,6 +59,28 @@ jobs:
           done
           echo "✓ 文档齐全"
 
+      - name: 安装器是规范源（无包名硬编码）
+        run: |
+          set -e
+          # 本仓的 scripts/install_skill.py 是所有技能仓安装器的规范源。
+          # 名字一旦被写死（marker、stage 前缀、备份路径），
+          # 拷到别的包就会带着别人的名字去写用户的目录。
+          #
+          # LEGACY_MARKERS 是故意留的向后兼容（识别旧版安装器建的拷贝），
+          # 它只读不写，所以豁免。
+          for bad in 'pr-contributor-stage' 'state/pr-contributor'; do
+            if grep -n "$bad" scripts/install_skill.py; then
+              echo "::error::安装器里残留包名硬编码: $bad"
+              exit 1
+            fi
+          done
+          # 写入用的 marker 必须是通用名，否则装到别的包里会写 .pr-contributor-install.json
+          grep -q '^MARKER = "\.skill-install\.json"$' scripts/install_skill.py || {
+            echo "::error::MARKER 必须是通用的 .skill-install.json"
+            exit 1
+          }
+          echo "✓ 安装器无包名硬编码"
+
       - name: 内部信息泄漏扫描
         run: |
           set -e

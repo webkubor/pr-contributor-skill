@@ -12,13 +12,16 @@ import tempfile
 import uuid
 
 SOURCE = Path(__file__).resolve().parent.parent
-MARKER = ".pr-contributor-install.json"
+MARKER = ".skill-install.json"
+# Older copies of this installer used a package-specific marker name. Accept
+# them so an existing copy install is still recognised as ours.
+LEGACY_MARKERS = (".pr-contributor-install.json",)
 FRAMEWORKS = {
     "claude": ".claude/skills", "codex": ".codex/skills",
     "agents": ".agents/skills", "dsh": ".dsh/skills",
     "magpie": ".config/magpie/library/skills", "hermes": ".hermes/skills",
 }
-IGNORED = {".git", "__pycache__", ".pytest_cache", MARKER}
+IGNORED = {".git", "__pycache__", ".pytest_cache", MARKER, *LEGACY_MARKERS}
 
 
 def within(path, parent):
@@ -76,11 +79,14 @@ def tree_digest(root):
 
 
 def owned_copy(dest, source):
-    try:
-        marker = dest / MARKER
-        return not marker.is_symlink() and json.loads(marker.read_text())["source"] == str(source)
-    except (OSError, ValueError, KeyError, TypeError):
-        return False
+    for marker_name in (MARKER, *LEGACY_MARKERS):
+        try:
+            marker = dest / marker_name
+            if not marker.is_symlink() and json.loads(marker.read_text())["source"] == str(source):
+                return True
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return False
 
 
 def validate(directory, source, name):
@@ -117,7 +123,7 @@ def install(directory, dest, source, copy, backups, discovery):
         return
     directory.mkdir(parents=True, exist_ok=True)
     # Stage before moving an existing install, so a failed copy preserves it.
-    stage = Path(tempfile.mkdtemp(prefix=".pr-contributor-stage-", dir=directory))
+    stage = Path(tempfile.mkdtemp(prefix=f".{dest.name}-stage-", dir=directory))
     staged = stage / dest.name
     saved = None
     try:
@@ -140,7 +146,7 @@ def install(directory, dest, source, copy, backups, discovery):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Install pr-contributor into detected agent skills directories (Python 3, no dependencies).", epilog="Examples: ./install.sh --target hermes; ./install.sh --target hermes --skills-dir /actual/hermes/skills --copy")
+    parser = argparse.ArgumentParser(description="Install this skill into detected agent skills directories (Python 3, no dependencies).", epilog="Examples: ./install.sh --target claude; ./install.sh --copy; ./install.sh --uninstall")
     parser.add_argument("--copy", action="store_true", help="copy skill files without .git instead of linking")
     parser.add_argument("--target", choices=tuple(FRAMEWORKS), help="select one framework (Hermes includes existing profiles)")
     parser.add_argument("--skills-dir", help="explicit absolute skills directory; overrides framework discovery")
@@ -159,7 +165,9 @@ def main(argv=None):
         profiles = home / ".hermes/profiles"
         if profiles.is_dir():
             discovery.extend(profile / "skills" for profile in profiles.iterdir() if profile.is_dir())
-        backups = home / ".local/state/pr-contributor/install-backups"
+        # Backups live under a per-skill path derived from the skill name, so
+        # each package keeps its own namespace and never collides.
+        backups = home / ".local/state" / name / "install-backups"
         failures = 0
         for label, directory, create, dest in validated:
             try:
